@@ -1,0 +1,16 @@
+{
+  "name": "coffeescript-loader",
+  "version": "0.1.0",
+  "description": "Node.js loader for CoffeeScript transpilation",
+  "type": "module",
+  "main": "./loader.js",
+  "scripts": {
+    "start": "npm test",
+    "test": "node --experimental-loader ./loader.js test/index.coffee"
+  },
+  "author": "Geoffrey Booth <webmaster@geoffreybooth.com>",
+  "license": "MIT",
+  "dependencies": {
+    "coffeescript": "^2.5.1"
+  }
+}

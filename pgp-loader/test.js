@@ -1,4 +1,4 @@
-import FOO from 'fixture.js.pgp';
+import { FOO } from 'fixture.js.pgp';
 import { equal } from 'assert';
 
 console.log('FOO is ' + FOO);

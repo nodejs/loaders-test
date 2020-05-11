@@ -39,15 +39,15 @@ export function getFormat(url, context, defaultGetFormat) {
 export function transformSource(source, context, defaultTransformSource) {
   if (context.url.endsWith('.pgp')) {
     return fs.readFile('private-key.asc', 'utf8')
-    .then((privKey)=> pgp.key.readArmored(privKey))
-    .then((priv)=> privateKeys = priv.keys)
-    .then(()=> privateKeys[0].decrypt(passwd))
-    .then(()=> pgp.message.readArmored(source))
-    .then((cryptMsg)=> pgp.decrypt({
+    .then(privKey => pgp.key.readArmored(privKey))
+    .then(priv => privateKeys = priv.keys)
+    .then(() => privateKeys[0].decrypt(passwd))
+    .then(() => pgp.message.readArmored(source))
+    .then(cryptMsg => pgp.decrypt({
         message: cryptMsg,
         privateKeys: privateKeys
     }))
-    .then((decripted)=> decripted.data)
+    .then(decripted => ({source: decripted.data}) )
   }
 
   // Let Node.js handle all other URLs.

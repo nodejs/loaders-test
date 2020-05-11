@@ -10,51 +10,51 @@ pgp.generateKey({
     passphrase: passwd
 })
 
-.then(({ privateKeyArmored, publicKeyArmored })=> {
+.then(({ privateKeyArmored, publicKeyArmored }) => {
     privKey = privateKeyArmored;
     pubKey = publicKeyArmored;
     console.log(privKey +'═════════════════════════════════════════\n'+ pubKey);
     return Promise.all([
-        fs.writeFile('private-key.asc', privKey),
-        fs.writeFile('public-key.asc', pubKey)
+        fs.writeFile('private-key.asc', privKey.replace(/\r/g, '')),
+        fs.writeFile('public-key.asc', pubKey.replace(/\r/g, ''))
     ]);
 })
 
-.then(()=> fs.readFile('fixture.js', 'utf8'))
-.then((src)=> moduleSrc = src)
+.then(() => fs.readFile('fixture.js', 'utf8'))
+.then(src => moduleSrc = src)
 
-.then(()=> pgp.key.readArmored(pubKey))
-.then((pub)=> publicKeys = pub.keys)
+.then(() => pgp.key.readArmored(pubKey))
+.then(pub => publicKeys = pub.keys)
 
-.then(()=> pgp.key.readArmored(privKey))
-.then((priv)=> privateKeys = priv.keys)
-.then(()=> privateKeys[0].decrypt(passwd))
+.then(() => pgp.key.readArmored(privKey))
+.then(priv => privateKeys = priv.keys)
+.then(() => privateKeys[0].decrypt(passwd))
 
-.then(()=> pgp.encrypt({
+.then(() => pgp.encrypt({
     message: pgp.message.fromText(moduleSrc),
     publicKeys: publicKeys,
     privateKeys: privateKeys
 }))
-.then((cipher)=> {
+.then(cipher => {
     console.log('Encripted module:\n', cipher.data);
-    return fs.writeFile('fixture.js.pgp', cipher.data);
+    return fs.writeFile('fixture.js.pgp', cipher.data.replace(/\r/g, ''));
 })
 
 // Test it:
 
-.then(()=> fs.readFile('fixture.js.pgp', 'utf8'))
-.then((encrypted)=> pgp.message.readArmored(encrypted))
-.then((cryptMsg)=> pgp.decrypt({
+.then(() => fs.readFile('fixture.js.pgp', 'utf8'))
+.then(encrypted => pgp.message.readArmored(encrypted))
+.then(cryptMsg => pgp.decrypt({
     message: cryptMsg,
     publicKeys: publicKeys,
     privateKeys: privateKeys
 }))
 
-.then((decripted)=> assert.equal(decripted.data, moduleSrc))
+.then(decripted => assert.equal(decripted.data, moduleSrc))
 
-.then(()=> console.log('All fine!'))
+.then(() => console.log('All fine!'))
 
-.catch((err)=> {
+.catch(err => {
     console.error('>>> Encriptation fail! <<<\n', err);
     process.exit(1);
 })

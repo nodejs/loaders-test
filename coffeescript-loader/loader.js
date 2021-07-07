@@ -10,7 +10,7 @@ const baseURL = pathToFileURL(process.cwd() + '/').href;
 // CoffeeScript files end in .coffee, .litcoffee or .coffee.md.
 const extensionsRegex = /\.coffee$|\.litcoffee$|\.coffee\.md$/;
 
-export function resolve(specifier, context, defaultResolve) {
+export async function resolve(specifier, context, defaultResolve) {
   const { parentURL = baseURL } = context;
 
   // Node.js normally errors on unknown file extensions, so return a URL for
@@ -25,7 +25,7 @@ export function resolve(specifier, context, defaultResolve) {
   return defaultResolve(specifier, context, defaultResolve);
 }
 
-export function getFormat(url, context, defaultGetFormat) {
+export async function load(url, context, defaultLoad) {
   // Now that we patched resolve to let CoffeeScript URLs through, we need to
   // tell Node.js what format such URLs should be interpreted as. Because
   // CoffeeScript transpiles into JavaScript, it should be one of the two
@@ -39,27 +39,27 @@ export function getFormat(url, context, defaultGetFormat) {
     // format Node.js returns for such a URL. If 'commonjs' is returned, a
     // handler will need to be registered with require.extensions to process
     // that file via the CommonJS loader.
-    const { format } = defaultGetFormat(`${url}.js`);
-    return {format};
-  }
+    const { format } = await defaultLoad(`${url}.js`, context);
 
-  // Let Node.js handle all other URLs.
-  return defaultGetFormat(url, context, defaultGetFormat);
-}
+    // source is ignored (never checked) for cjs, so safe to omit
+    if (format === 'commonjs') return { format };
 
-export function transformSource(source, context, defaultTransformSource) {
-  const { url, format } = context;
+    const { source: rawSource } = await defaultLoad(url, { format });
+    // This hook converts CoffeeScript source code into JavaScript source code
+    // for all imported CoffeeScript files.
+    const transformedSource = CoffeeScript.compile(rawSource, {
+      bare: true,
+      filename: url,
+    });
 
-  // This hook converts CoffeeScript source code into JavaScript source code
-  // for all imported CoffeeScript files.
-  if (extensionsRegex.test(url)) {
     return {
-      source: CoffeeScript.compile(source, {bare: true, filename: url})
+      format,
+      source: transformedSource,
     };
   }
 
-  // Let Node.js handle all other sources.
-  return defaultTransformSource(source, context, defaultTransformSource);
+  // Let Node.js handle all other URLs.
+  return defaultLoad(url, context, defaultLoad);
 }
 
 

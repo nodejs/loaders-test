@@ -1,8 +1,15 @@
 import { readFileSync } from 'fs';
 import { createRequire } from 'module';
-import { URL, pathToFileURL } from 'url';
+import { dirname } from 'path';
+import {
+  fileURLToPath,
+  pathToFileURL,
+  URL,
+} from 'url';
 
 import CoffeeScript from 'coffeescript';
+
+import getPackageType from './getPackageType.js';
 
 
 const baseURL = pathToFileURL(process.cwd() + '/').href;
@@ -31,15 +38,12 @@ export async function load(url, context, defaultLoad) {
   // CoffeeScript transpiles into JavaScript, it should be one of the two
   // JavaScript formats: 'commonjs' or 'module'.
   if (extensionsRegex.test(url)) {
-    // CoffeeScript files can be either CommonJS or ES modules, so we want any
-    // CoffeeScript file to be treated by Node.js the same as a .js file would
-    // be at the same location (based on the "type" field in the nearest
-    // parent package.json file). To determine how Node.js would interpret an
-    // arbitrary .js file, append .js to our CoffeeScript URL and see what
-    // format Node.js returns for such a URL. If 'commonjs' is returned, a
-    // handler will need to be registered with require.extensions to process
-    // that file via the CommonJS loader.
-    const { format } = await defaultLoad(`${url}.js`, context);
+console.log({ url })
+    // CoffeeScript files can be either CommonJS or ES modules, but since load
+    // handles both format and source based on the same url, it cannot be used
+    // for non-js files. Instead, a quick search up the filesystem for a
+    // package.json with a `type` field settles the format issue.
+    const format = await getPackageType(dirname(fileURLToPath(url)));
 
     // source is ignored (never checked) for cjs, so safe to omit
     if (format === 'commonjs') return { format };
@@ -47,10 +51,11 @@ export async function load(url, context, defaultLoad) {
     const { source: rawSource } = await defaultLoad(url, { format });
     // This hook converts CoffeeScript source code into JavaScript source code
     // for all imported CoffeeScript files.
-    const transformedSource = CoffeeScript.compile(rawSource, {
+    const transformedSource = CoffeeScript.compile(''+rawSource, {
       bare: true,
       filename: url,
     });
+console.log('source transformed')
 
     return {
       format,
@@ -71,6 +76,8 @@ const require = createRequire(import.meta.url);
 ['.coffee', '.litcoffee', '.coffee.md'].forEach(extension => {
   require.extensions[extension] = (module, filename) => {
     const source = readFileSync(filename, 'utf8');
-    return CoffeeScript.compile(source, {bare: true, filename});
+    const transformedSource = CoffeeScript.compile(source, { bare: true, filename });
+console.log({ [filename]: transformedSource })
+    return transformedSource
   }
 })

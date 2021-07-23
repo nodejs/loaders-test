@@ -1,6 +1,7 @@
 import { ok } from 'assert';
 import { spawn } from 'child_process';
 import { execPath } from 'process';
+import { fileURLToPath, URL } from 'url';
 
 
 // Run this test yourself with debugging mode via:
@@ -8,8 +9,8 @@ import { execPath } from 'process';
 
 const child = spawn(execPath, [
   '--experimental-loader',
-  './loader.js',
-  './fixture.js'
+  fileURLToPath(new URL('./loader.js', import.meta.url).href),
+  fileURLToPath(new URL('./fixture.js', import.meta.url).href),
 ]);
 
 let stdout = '';
@@ -19,5 +20,6 @@ child.stdout.on('data', (data) => {
 });
 
 child.on('close', (code, signal) => {
+  console.log(`stdout "${stdout}"`)
   ok(/The browser-based version of CoffeeScript hosted at coffeescript\.org is: \d+\.\d+\.\d+/.test(stdout.toString()));
 });

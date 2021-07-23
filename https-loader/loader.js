@@ -20,19 +20,7 @@ export function resolve(specifier, context, defaultResolve) {
   return defaultResolve(specifier, context, defaultResolve);
 }
 
-export function getFormat(url, context, defaultGetFormat) {
-  // This loader assumes all network-provided JavaScript is ES module code.
-  if (url.startsWith('https://')) {
-    return {
-      format: 'module'
-    };
-  }
-
-  // Let Node.js handle all other URLs.
-  return defaultGetFormat(url, context, defaultGetFormat);
-}
-
-export function getSource(url, context, defaultGetSource) {
+export function load(url, context, defaultLoad) {
   // For JavaScript to be loaded over the network, we need to fetch and
   // return it.
   if (url.startsWith('https://')) {
@@ -40,11 +28,15 @@ export function getSource(url, context, defaultGetSource) {
       get(url, (res) => {
         let data = '';
         res.on('data', chunk => data += chunk);
-        res.on('end', () => resolve({ source: data }));
+        res.on('end', () => resolve({
+          // assume all network-provided JavaScript is ES module code
+          format: 'module',
+          source: data,
+        }));
       }).on('error', err => reject(err));
     });
   }
 
   // Let Node.js handle all other URLs.
-  return defaultGetSource(url, context, defaultGetSource);
+  return defaultLoad(url, context, defaultLoad);
 }

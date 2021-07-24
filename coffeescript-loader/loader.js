@@ -1,6 +1,10 @@
+import { readFile } from 'fs/promises';
 import { readFileSync } from 'fs';
 import { createRequire } from 'module';
-import { dirname } from 'path';
+import {
+  dirname,
+  resolve as resolvePath,
+} from 'path';
 import {
   fileURLToPath,
   pathToFileURL,
@@ -8,8 +12,6 @@ import {
 } from 'url';
 
 import CoffeeScript from 'coffeescript';
-
-import getPackageType from './getPackageType.js';
 
 
 const baseURL = pathToFileURL(process.cwd() + '/').href;
@@ -63,6 +65,19 @@ export async function load(url, context, defaultLoad) {
 
   // Let Node.js handle all other URLs.
   return defaultLoad(url, context, defaultLoad);
+}
+
+function getPackageType(dir) {
+  const packagePath = resolvePath(dir, 'package.json');
+
+  return readFile(packagePath, { encoding: 'utf8' })
+    .then((filestring) => JSON.parse(filestring))
+    .then(({ type }) => type)
+    .catch((err) => {
+      if (err?.code !== 'ENOENT') console.error(err);
+
+      return dir.length > 1 && getPackageType(resolvePath(dir, '..'))
+    });
 }
 
 

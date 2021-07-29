@@ -39,8 +39,14 @@ export async function load(url, context, defaultLoad) {
     // file, search up the file system for the nearest parent package.json file
     // and read its "type" field.
     const format = await getPackageType(url);
-    // source is ignored (never checked) for cjs, so safe to omit
-    if (format === 'commonjs') return { format };
+    // When a hook returns a format of 'commonjs', `source` is be ignored.
+    // To handle CommonJS files, a handler needs to be registered with
+    // `require.extensions` in order to process the files with the CommonJS
+    // loader. Avoiding the need for a separate CommonJS handler is a future
+    // enhancement planned for ES module loaders.
+    if (format === 'commonjs') {
+      return { format };
+    }
 
     const { source: rawSource } = await defaultLoad(url, { format });
     // This hook converts CoffeeScript source code into JavaScript source code

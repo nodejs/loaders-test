@@ -40,10 +40,11 @@ export async function load(url, context, defaultLoad) {
   // CoffeeScript transpiles into JavaScript, it should be one of the two
   // JavaScript formats: 'commonjs' or 'module'.
   if (extensionsRegex.test(url)) {
-    // CoffeeScript files can be either CommonJS or ES modules, but since load
-    // handles both format and source based on the same url, it cannot be used
-    // for non-js files. Instead, a quick search up the filesystem for a
-    // package.json with a `type` field settles the format issue.
+    // CoffeeScript files can be either CommonJS or ES modules, so we want any
+    // CoffeeScript file to be treated by Node.js the same as a .js file at the
+    // same location. To determine how Node.js would interpret an arbitrary .js
+    // file, search up the file system for the nearest parent package.json file
+    // and read its "type" field.
     const format = await getPackageType(dirname(fileURLToPath(url)));
 
     // source is ignored (never checked) for cjs, so safe to omit

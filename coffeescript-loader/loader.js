@@ -92,8 +92,6 @@ const require = createRequire(import.meta.url);
 ['.coffee', '.litcoffee', '.coffee.md'].forEach(extension => {
   require.extensions[extension] = (module, filename) => {
     const source = readFileSync(filename, 'utf8');
-    const transformedSource = CoffeeScript.compile(source, { bare: true, filename });
-
-    return transformedSource
+    return CoffeeScript.compile(source, { bare: true, filename });
   }
 })

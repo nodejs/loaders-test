@@ -20,6 +20,5 @@ child.stdout.on('data', (data) => {
 });
 
 child.on('close', (code, signal) => {
-  console.log(`stdout "${stdout}"`)
   ok(/The browser-based version of CoffeeScript hosted at coffeescript\.org is: \d+\.\d+\.\d+/.test(stdout.toString()));
 });

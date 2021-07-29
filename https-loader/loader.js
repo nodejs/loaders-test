@@ -29,7 +29,8 @@ export function load(url, context, defaultLoad) {
         let data = '';
         res.on('data', chunk => data += chunk);
         res.on('end', () => resolve({
-          // assume all network-provided JavaScript is ES module code
+          // This example assumes all network-provided JavaScript is ES module
+          // code.
           format: 'module',
           source: data,
         }));

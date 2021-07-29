@@ -1,15 +1,8 @@
 import { readFile } from 'fs/promises';
 import { readFileSync } from 'fs';
 import { createRequire } from 'module';
-import {
-  dirname,
-  resolve as resolvePath,
-} from 'path';
-import {
-  fileURLToPath,
-  pathToFileURL,
-  URL,
-} from 'url';
+import { dirname, extname, resolve as resolvePath } from 'path';
+import { fileURLToPath, pathToFileURL } from 'url';
 
 import CoffeeScript from 'coffeescript';
 
@@ -45,8 +38,7 @@ export async function load(url, context, defaultLoad) {
     // same location. To determine how Node.js would interpret an arbitrary .js
     // file, search up the file system for the nearest parent package.json file
     // and read its "type" field.
-    const format = await getPackageType(dirname(fileURLToPath(url)));
-
+    const format = await getPackageType(url);
     // source is ignored (never checked) for cjs, so safe to omit
     if (format === 'commonjs') return { format };
 
@@ -68,7 +60,11 @@ export async function load(url, context, defaultLoad) {
   return defaultLoad(url, context, defaultLoad);
 }
 
-function getPackageType(dir) {
+function getPackageType(url) {
+  const isFile = !!extname(url);
+  const dir = isFile
+    ? dirname(fileURLToPath(url))
+    : url;
   const packagePath = resolvePath(dir, 'package.json');
 
   return readFile(packagePath, { encoding: 'utf8' })
@@ -77,7 +73,7 @@ function getPackageType(dir) {
     .catch((err) => {
       if (err?.code !== 'ENOENT') console.error(err);
 
-      return dir.length > 1 && getPackageType(resolvePath(dir, '..'))
+      return dir.length > 1 && getPackageType(resolvePath(dir, '..'));
     });
 }
 

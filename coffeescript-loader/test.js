@@ -27,6 +27,9 @@ child.on('close', (code, signal) => {
   ok(stdout.includes('Hello from CoffeeScript', 'Main entry transpiles'));
   ok(stdout.includes('HELLO FROM ESM'), 'ESM import transpiles');
 
-  // this relies on a named export from CommonJS, which is not supposed to work
+  // There is a known issue between ESM + CJS where CJS named exports get lost:
+  // require.extentions appropriately supplies (transformed) source, but an
+  // empty object is returned for the module's exports.
+  // the import does NOT hit ESMLoader or its CJS strategy.
   ok(!stdout.includes('Hello from CommonJS!'), 'Named CommonJS import fails');
 });

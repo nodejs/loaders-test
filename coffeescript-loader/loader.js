@@ -66,21 +66,22 @@ export async function load(url, context, defaultLoad) {
   return defaultLoad(url, context, defaultLoad);
 }
 
-function getPackageType(url) {
+async function getPackageType(url) {
   const isFile = !!extname(url);
   const dir = isFile
     ? dirname(fileURLToPath(url))
     : url;
   const packagePath = resolvePath(dir, 'package.json');
 
-  return readFile(packagePath, { encoding: 'utf8' })
-    .then((filestring) => JSON.parse(filestring))
-    .then(({ type }) => type)
+  const type = await readFile(packagePath, { encoding: 'utf8' })
+    .then((filestring) => JSON.parse(filestring).type)
     .catch((err) => {
       if (err?.code !== 'ENOENT') console.error(err);
-
-      return dir.length > 1 && getPackageType(resolvePath(dir, '..'));
     });
+
+  if (type) return type;
+
+  return dir.length > 1 && getPackageType(resolvePath(dir, '..'));
 }
 
 

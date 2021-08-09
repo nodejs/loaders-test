@@ -51,7 +51,7 @@ export async function load(url, context, defaultLoad) {
     const { source: rawSource } = await defaultLoad(url, { format });
     // This hook converts CoffeeScript source code into JavaScript source code
     // for all imported CoffeeScript files.
-    const transformedSource = CoffeeScript.compile(''+rawSource, {
+    const transformedSource = CoffeeScript.compile(rawSource.toString(), {
       bare: true,
       filename: url,
     });

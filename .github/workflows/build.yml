@@ -1,0 +1,39 @@
+on: ["push", "pull_request"]
+
+name: Build
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+
+    - uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: 17.x
+
+    - name: Test CoffeeScript Loader
+      working-directory: coffeescript-loader
+      run: |
+        npm install
+        npm test
+
+    - name: Test CommonJS Extension Resolution Loader
+      working-directory: commonjs-extension-resolution-loader
+      run: |
+        npm install
+        npm test
+
+    - name: Test HTTPS Loader
+      working-directory: https-loader
+      run: |
+        npm install
+        npm test
+
+    - name: Test PGP Loader
+      working-directory: pgp-loader
+      run: |
+        npm install
+        npm test

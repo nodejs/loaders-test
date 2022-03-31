@@ -24,32 +24,25 @@ export function resolve(specifier, context, defaultResolve) {
   return defaultResolve(specifier, context, defaultResolve);
 }
 
-export function getFormat(url, context, defaultGetFormat) {
-  // This loader assumes all PGP files are JavaScript ES modules.
+export async function load(url, context, defaultLoad) {
   if (url.endsWith('.pgp')) {
-    return {
-      format: 'module'
-    };
-  }
+    const { source } = await defaultLoad(url, { format: "module" })
 
-  // Let Node.js handle all other URLs.
-  return defaultGetFormat(url, context, defaultGetFormat);
-}
-
-export function transformSource(source, context, defaultTransformSource) {
-  if (context.url.endsWith('.pgp')) {
     return fs.readFile('private-key.asc', 'utf8')
-    .then(privKey => pgp.key.readArmored(privKey))
-    .then(priv => privateKeys = priv.keys)
-    .then(() => privateKeys[0].decrypt(passwd))
-    .then(() => pgp.message.readArmored(source))
-    .then(cryptMsg => pgp.decrypt({
+      .then(privKey => pgp.key.readArmored(privKey))
+      .then(priv => privateKeys = priv.keys)
+      .then(() => privateKeys[0].decrypt(passwd))
+      .then(() => pgp.message.readArmored(source))
+      .then(cryptMsg => pgp.decrypt({
         message: cryptMsg,
         privateKeys: privateKeys
-    }))
-    .then(decripted => ({source: decripted.data}) )
+      }))
+      .then(decripted => ({
+        format: "module",
+        source: decripted.data
+      }))
   }
 
   // Let Node.js handle all other URLs.
-  return defaultTransformSource(source, context, defaultTransformSource);
+  return defaultLoad(url, context, defaultLoad);
 }

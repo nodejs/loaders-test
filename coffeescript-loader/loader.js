@@ -5,7 +5,7 @@ import { dirname, extname, resolve as resolvePath } from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 
 import CoffeeScript from 'coffeescript';
-const compile = (source, filename) => CoffeeScript.compile(source, {
+const coffeeCompile = (source, filename) => CoffeeScript.compile(source, {
   bare: true,
   filename
 });
@@ -54,7 +54,7 @@ export async function load(url, context, defaultLoad) {
     const { source: rawSource } = await defaultLoad(url, { format });
     // This hook converts CoffeeScript source code into JavaScript source code
     // for all imported CoffeeScript files.
-    const transformedSource = compile(rawSource.toString(), url)
+    const transformedSource = coffeeCompile(rawSource.toString(), url)
 
     return {
       format,
@@ -93,6 +93,6 @@ const require = createRequire(import.meta.url);
 ['.coffee', '.litcoffee', '.coffee.md'].forEach(extension => {
   require.extensions[extension] = (module, filename) => {
     const source = readFileSync(filename, 'utf8');
-    return module._compile(compile(source, filename), filename);
+    return module._compile(coffeeCompile(source, filename), filename);
   }
 })

@@ -84,15 +84,6 @@ async function getPackageType(url) {
   return dir.length > 1 && getPackageType(resolvePath(dir, '..'));
 }
 
-
-// Register CoffeeScript to also transform CommonJS files. This can more
-// thoroughly be done for CoffeeScript specifically via
-// `CoffeeScript.register()`, but for purposes of this example this is the
-// simplest method.
+// Register CoffeeScript to also transform CommonJS files.
 const require = createRequire(import.meta.url);
-['.coffee', '.litcoffee', '.coffee.md'].forEach(extension => {
-  require.extensions[extension] = (module, filename) => {
-    const source = readFileSync(filename, 'utf8');
-    return module._compile(coffeeCompile(source, filename), filename);
-  }
-})
+require("coffeescript/register")

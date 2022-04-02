@@ -1,5 +1,4 @@
 import { readFile } from 'fs/promises';
-import { readFileSync } from 'fs';
 import { createRequire } from 'module';
 import { dirname, extname, resolve as resolvePath } from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';

@@ -1,11 +1,13 @@
 import { readFile } from 'fs/promises';
-import { readFileSync } from 'fs';
 import { createRequire } from 'module';
 import { dirname, extname, resolve as resolvePath } from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 
 import CoffeeScript from 'coffeescript';
-
+const coffeeCompile = (source, filename) => CoffeeScript.compile(source, {
+  bare: true,
+  filename
+});
 
 const baseURL = pathToFileURL(process.cwd() + '/').href;
 
@@ -51,10 +53,7 @@ export async function load(url, context, defaultLoad) {
     const { source: rawSource } = await defaultLoad(url, { format });
     // This hook converts CoffeeScript source code into JavaScript source code
     // for all imported CoffeeScript files.
-    const transformedSource = CoffeeScript.compile(rawSource.toString(), {
-      bare: true,
-      filename: url,
-    });
+    const transformedSource = coffeeCompile(rawSource.toString(), url)
 
     return {
       format,
@@ -84,15 +83,6 @@ async function getPackageType(url) {
   return dir.length > 1 && getPackageType(resolvePath(dir, '..'));
 }
 
-
-// Register CoffeeScript to also transform CommonJS files. This can more
-// thoroughly be done for CoffeeScript specifically via
-// `CoffeeScript.register()`, but for purposes of this example this is the
-// simplest method.
+// Register CoffeeScript to also transform CommonJS files.
 const require = createRequire(import.meta.url);
-['.coffee', '.litcoffee', '.coffee.md'].forEach(extension => {
-  require.extensions[extension] = (module, filename) => {
-    const source = readFileSync(filename, 'utf8');
-    return CoffeeScript.compile(source, { bare: true, filename });
-  }
-})
+require("coffeescript/register")

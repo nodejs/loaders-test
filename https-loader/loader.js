@@ -1,6 +1,6 @@
 import { get } from 'https';
 
-export function resolve(specifier, context, defaultResolve) {
+export function resolve(specifier, context, nextResolve) {
   const { parentURL = null } = context;
 
   // Normally Node.js would error on specifiers starting with 'https://', so
@@ -8,19 +8,21 @@ export function resolve(specifier, context, defaultResolve) {
   // passed along to the later hooks below.
   if (specifier.startsWith('https://')) {
     return {
+      shortCircuit: true,
       url: specifier
     };
   } else if (parentURL && parentURL.startsWith('https://')) {
     return {
+      shortCircuit: true,
       url: new URL(specifier, parentURL).href
     };
   }
 
   // Let Node.js handle all other specifiers.
-  return defaultResolve(specifier, context, defaultResolve);
+  return nextResolve(specifier, context);
 }
 
-export function load(url, context, defaultLoad) {
+export function load(url, context, nextLoad) {
   // For JavaScript to be loaded over the network, we need to fetch and
   // return it.
   if (url.startsWith('https://')) {
@@ -32,6 +34,7 @@ export function load(url, context, defaultLoad) {
           // This example assumes all network-provided JavaScript is ES module
           // code.
           format: 'module',
+          shortCircuit: true,
           source: data,
         }));
       }).on('error', err => reject(err));
@@ -39,5 +42,5 @@ export function load(url, context, defaultLoad) {
   }
 
   // Let Node.js handle all other URLs.
-  return defaultLoad(url, context, defaultLoad);
+  return nextLoad(url, context);
 }

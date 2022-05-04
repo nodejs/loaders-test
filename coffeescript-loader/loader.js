@@ -14,22 +14,23 @@ const baseURL = pathToFileURL(process.cwd() + '/').href;
 // CoffeeScript files end in .coffee, .litcoffee or .coffee.md.
 const extensionsRegex = /\.coffee$|\.litcoffee$|\.coffee\.md$/;
 
-export async function resolve(specifier, context, defaultResolve) {
+export async function resolve(specifier, context, nextResolve) {
   const { parentURL = baseURL } = context;
 
   // Node.js normally errors on unknown file extensions, so return a URL for
   // specifiers ending in the CoffeeScript file extensions.
   if (extensionsRegex.test(specifier)) {
     return {
+      shortCircuit: true,
       url: new URL(specifier, parentURL).href
     };
   }
 
   // Let Node.js handle all other specifiers.
-  return defaultResolve(specifier, context, defaultResolve);
+  return nextResolve(specifier, context);
 }
 
-export async function load(url, context, defaultLoad) {
+export async function load(url, context, nextLoad) {
   // Now that we patched resolve to let CoffeeScript URLs through, we need to
   // tell Node.js what format such URLs should be interpreted as. Because
   // CoffeeScript transpiles into JavaScript, it should be one of the two
@@ -47,22 +48,26 @@ export async function load(url, context, defaultLoad) {
     // loader. Avoiding the need for a separate CommonJS handler is a future
     // enhancement planned for ES module loaders.
     if (format === 'commonjs') {
-      return { format };
+      return {
+        format,
+        shortCircuit: true,
+      };
     }
 
-    const { source: rawSource } = await defaultLoad(url, { format });
+    const { source: rawSource } = await nextLoad(url, { format });
     // This hook converts CoffeeScript source code into JavaScript source code
     // for all imported CoffeeScript files.
     const transformedSource = coffeeCompile(rawSource.toString(), url)
 
     return {
       format,
+      shortCircuit: true,
       source: transformedSource,
     };
   }
 
   // Let Node.js handle all other URLs.
-  return defaultLoad(url, context, defaultLoad);
+  return nextLoad(url, context);
 }
 
 async function getPackageType(url) {

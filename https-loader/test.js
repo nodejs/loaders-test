@@ -1,24 +1,32 @@
-import { ok } from 'assert';
-import { spawn } from 'child_process';
+import { fileURLToPath } from 'url';
+import { ok, strictEqual } from 'assert';
+import { spawnSync } from 'child_process';
 import { execPath } from 'process';
-import { fileURLToPath, URL } from 'url';
-
 
 // Run this test yourself with debugging mode via:
 // node --inspect-brk --experimental-loader ./loader.js ./fixture.js
 
-const child = spawn(execPath, [
-  '--experimental-loader',
-  fileURLToPath(new URL('./loader.js', import.meta.url).href),
-  fileURLToPath(new URL('./fixture.js', import.meta.url).href),
-]);
+const loader = fileURLToPath(new URL(
+  './loader.js',
+  import.meta.url
+));
+const fixture = fileURLToPath(new URL(
+  './fixture.js',
+  import.meta.url
+));
 
-let stdout = '';
-child.stdout.setEncoding('utf8');
-child.stdout.on('data', (data) => {
-  stdout += data;
-});
+const { status, stderr, stdout } = spawnSync(
+  execPath,
+  [
+    '--experimental-loader',
+    loader,
+    fixture,
+  ],
+  { encoding: 'utf8' },
+);
 
-child.on('close', (code, signal) => {
-  ok(/The browser-based version of CoffeeScript hosted at coffeescript\.org is: \d+\.\d+\.\d+/.test(stdout.toString()));
-});
+console.error(stderr);
+
+
+strictEqual(status, 0);
+ok(/The browser-based version of CoffeeScript hosted at coffeescript\.org is: \d+\.\d+\.\d+/.test(stdout.toString()));

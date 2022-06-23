@@ -12,7 +12,7 @@ const loader = fileURLToPath(new URL(
 ));
 
 for (const relFixturePath of [
-  './fixtures/index-asserted.js',
+  './fixtures/index-js-ext.js',
   './fixtures/index-ts-ext.js',
 ]) {
   const fixture = fileURLToPath(new URL(relFixturePath, import.meta.url));

@@ -2,47 +2,67 @@
 
 import path from 'node:path';
 
-import tsc from 'typescript';
+import { transform } from 'esbuild';
 
-const tsExts = new Set(['.mts', '.ts', '.tsx']);
+const jsToTs = new Map([
+  // Sorted by priority (first wins)
+  ['.js',  '.ts' ],
+  ['.cjs', '.cts'],
+  ['.mjs', '.mts'],
+  ['.jsx', '.tsx'],
+]);
+const jsExts = new Set(jsToTs.keys());
+const tsExts = new Set(jsToTs.values());
 
 export function resolve(specifier, context, nextResolve) {
-  if (!isTypeScriptFile(specifier, context)) { return nextResolve(specifier, context); }
+  const { base, ext, name } = path.parse(specifier);
 
-  const { base, name } = path.parse(specifier);
+  if (tsExts.has(ext)) { // No guessing needed
+    const { url } = nextResolve(specifier, context);
 
-  for (const tsExt of tsExts) {
-    const maybeRealFilepath = specifier.replace(base, `${name}${tsExt}`);
+    return {
+      format: 'typescript', // Provide a signal to `load`
+      shortCircuit: true,
+      url,
+    };
+  }
 
+  if (!jsExts.has(ext)) { // When file is not ts or js, it's irrelevant
+    return nextResolve(specifier, context);
+  }
+
+  try { // Check whether such a js file does exist
+    return nextResolve(specifier, context);
+  } catch (err) {
+    if (err?.code !== "ERR_MODULE_NOT_FOUND") { throw err; }
+  }
+
+  for (const tsExt of tsExts) { // Finally, check whether any ts file exists
     try {
-      const { url } = nextResolve(maybeRealFilepath, context);
+      const maybePath = specifier.replace(base, `${name}${tsExt}`);
+      const { url } = nextResolve(maybePath, context);
 
       return {
         format: 'typescript', // Provide a signal to `load`
         shortCircuit: true,
         url,
       };
-    } catch(err) { if (err.code !== 'ERR_MODULE_NOT_FOUND') throw err }
+    } catch (err) {
+      if (err?.code !== "ERR_MODULE_NOT_FOUND") { throw err; }
+    }
   }
-
-  // ❗️ File does not exist. Call nextResolve to get an appropriate error from Node
-  return nextResolve(specifier, context);
 }
 
 export async function load(url, context, nextLoad) {
-  if (context.format !== 'typescript') return nextLoad(url, context);
+  if (context.format !== 'typescript') { return nextLoad(url, context); }
 
-  const { source: rawSource } = (await nextLoad(url, {
-    ...context,
-    format: 'module',
-    importAssertions: {}, // 'typescript' is not a valid type assertion, so don't pass it into Node
-  }));
+  const rawSource = '' + (await nextLoad(url, { ...context, format: 'module' })).source;
 
-  const { outputText: transpiledSource } = tsc.transpileModule(''+rawSource, {
-    compilerOptions: {
-      allowJs: true,
-      target: 'esnext',
-    },
+  const { code: transpiledSource } = await transform(rawSource, {
+    format: 'esm',
+		loader: 'ts',
+		sourcemap: 'inline',
+		target: 'esnext',
   });
 
   return {
@@ -50,13 +70,4 @@ export async function load(url, context, nextLoad) {
     shortCircuit: true,
     source: transpiledSource,
   };
-}
-
-function isTypeScriptFile(specifier, context) {
-  const ext = path.extname(specifier);
-
-  if (tsExts.has(ext)) return true;
-  if (context.importAssertions.type === 'typescript') return true;
-
-  return false;
 }

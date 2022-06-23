@@ -11,7 +11,6 @@ const jsToTs = new Map([
   ['.mjs', '.mts'],
   ['.jsx', '.tsx'],
 ]);
-const jsExts = new Set(jsToTs.keys());
 const tsExts = new Set(jsToTs.values());
 
 export async function resolve(specifier, context, nextResolve) {
@@ -27,7 +26,9 @@ export async function resolve(specifier, context, nextResolve) {
     };
   }
 
-  if (!jsExts.has(ext)) { // When file is not ts or js, it's irrelevant
+  const tsExt = jsToTs.get(ext); // Get corresponding ts extension (ex .mjs → .mts)
+
+  if (tsExt == null) { // File is not ts or js, so it's irrelevant
     return nextResolve(specifier, context);
   }
 
@@ -37,19 +38,17 @@ export async function resolve(specifier, context, nextResolve) {
     if (err?.code !== "ERR_MODULE_NOT_FOUND") { throw err; }
   }
 
-  for (const tsExt of tsExts) { // Finally, check whether any ts file exists
-    try {
-      const maybePath = specifier.replace(base, `${name}${tsExt}`);
-      const { url } = await nextResolve(maybePath, context);
+  try { // Finally, check whether the corresponding ts file exists
+    const maybePath = specifier.replace(base, `${name}${tsExt}`);
+    const { url } = await nextResolve(maybePath, context);
 
-      return {
-        format: 'typescript', // Provide a signal to `load`
-        shortCircuit: true,
-        url,
-      };
-    } catch (err) {
-      if (err?.code !== "ERR_MODULE_NOT_FOUND") { throw err; }
-    }
+    return {
+      format: 'typescript', // Provide a signal to `load`
+      shortCircuit: true,
+      url,
+    };
+  } catch (err) {
+    if (err?.code !== "ERR_MODULE_NOT_FOUND") { throw err; }
   }
 }
 

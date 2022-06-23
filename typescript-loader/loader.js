@@ -14,11 +14,11 @@ const jsToTs = new Map([
 const jsExts = new Set(jsToTs.keys());
 const tsExts = new Set(jsToTs.values());
 
-export function resolve(specifier, context, nextResolve) {
+export async function resolve(specifier, context, nextResolve) {
   const { base, ext, name } = path.parse(specifier);
 
   if (tsExts.has(ext)) { // No guessing needed
-    const { url } = nextResolve(specifier, context);
+    const { url } = await nextResolve(specifier, context);
 
     return {
       format: 'typescript', // Provide a signal to `load`
@@ -32,7 +32,7 @@ export function resolve(specifier, context, nextResolve) {
   }
 
   try { // Check whether such a js file does exist
-    return nextResolve(specifier, context);
+    return await nextResolve(specifier, context);
   } catch (err) {
     if (err?.code !== "ERR_MODULE_NOT_FOUND") { throw err; }
   }
@@ -40,7 +40,7 @@ export function resolve(specifier, context, nextResolve) {
   for (const tsExt of tsExts) { // Finally, check whether any ts file exists
     try {
       const maybePath = specifier.replace(base, `${name}${tsExt}`);
-      const { url } = nextResolve(maybePath, context);
+      const { url } = await nextResolve(maybePath, context);
 
       return {
         format: 'typescript', // Provide a signal to `load`

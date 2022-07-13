@@ -11,27 +11,22 @@ const loader = fileURLToPath(new URL(
   import.meta.url
 ));
 
-for (const relFixturePath of [
-  './fixtures/index-js-ext.js',
-  './fixtures/index-ts-ext.js',
-]) {
-  const fixture = fileURLToPath(new URL(relFixturePath, import.meta.url));
+const fixture = fileURLToPath(new URL('./fixtures/index.js', import.meta.url));
 
-  const { status, stderr, stdout } = spawnSync(
-    execPath,
-    [
-      '--no-warnings',
-      '--experimental-loader',
-      loader,
-      fixture,
-    ],
-    { encoding: 'utf8' },
-  );
+const { status, stderr, stdout } = spawnSync(
+  execPath,
+  [
+    '--no-warnings',
+    '--experimental-loader',
+    loader,
+    fixture,
+  ],
+  { encoding: 'utf8' },
+);
 
-  strictEqual(stderr, '');
+strictEqual(stderr, '');
 
-  match(stdout, /sum: 7/);
-  match(stdout, /VERSION: 42/);
+match(stdout, /sum: 7/);
+match(stdout, /VERSION: 42/);
 
-  strictEqual(status, 0);
-}
+strictEqual(status, 0);

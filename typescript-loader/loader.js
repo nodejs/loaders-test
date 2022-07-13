@@ -4,52 +4,26 @@ import path from 'node:path';
 
 import { transform } from 'esbuild';
 
-const jsToTs = new Map([
-  // Sorted by priority (first wins)
-  ['.js',  '.ts' ],
-  ['.cjs', '.cts'],
-  ['.mjs', '.mts'],
-  ['.jsx', '.tsx'],
+
+const tsExts = new Set([
+  '.tsx',
+  '.ts',
+  '.mts',
+  '.cts',
 ]);
-const tsExts = new Set(jsToTs.values());
 
 export async function resolve(specifier, context, nextResolve) {
-  const { base, ext, name } = path.parse(specifier);
+  const ext = path.extname(specifier);
 
-  if (tsExts.has(ext)) { // No guessing needed
-    const { url } = await nextResolve(specifier, context);
+  const resolution = nextResolve(specifier); // No need to await nextResolve (yet)
 
-    return {
-      format: 'typescript', // Provide a signal to `load`
-      shortCircuit: true,
-      url,
-    };
-  }
+  if (!tsExts.has(ext)) { return resolution; } // File is not ts, so step aside
 
-  const tsExt = jsToTs.get(ext); // Get corresponding ts extension (ex .mjs → .mts)
-
-  if (tsExt == null) { // File is not ts or js, so it's irrelevant
-    return nextResolve(specifier, context);
-  }
-
-  try { // Check whether such a js file does exist
-    return await nextResolve(specifier, context);
-  } catch (err) {
-    if (err?.code !== "ERR_MODULE_NOT_FOUND") { throw err; }
-  }
-
-  try { // Finally, check whether the corresponding ts file exists
-    const maybePath = specifier.replace(base, `${name}${tsExt}`);
-    const { url } = await nextResolve(maybePath, context);
-
-    return {
-      format: 'typescript', // Provide a signal to `load`
-      shortCircuit: true,
-      url,
-    };
-  } catch (err) {
-    if (err?.code !== "ERR_MODULE_NOT_FOUND") { throw err; }
-  }
+  return {
+    format: 'typescript', // Provide a signal to `load`
+    shortCircuit: true,
+    url: (await resolution).url,
+  };
 }
 
 export async function load(url, context, nextLoad) {

@@ -1,0 +1,19 @@
+{
+  "name": "typescript-loader",
+  "author": "Jacob Smith",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./loader.js",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "start": "npm test",
+    "test": "node --experimental-loader ./loader.js test.js",
+    "type-check": "tsc --allowJs --noEmit --module esnext ./fixtures/index.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.14.47",
+    "typescript": "^4.7.4"
+  }
+}

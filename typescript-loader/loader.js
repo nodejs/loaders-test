@@ -15,19 +15,19 @@ const tsExts = new Set([
 export async function resolve(specifier, context, nextResolve) {
   const ext = path.extname(specifier);
 
-  const resolution = nextResolve(specifier); // No need to await nextResolve (yet)
+  if (!tsExts.has(ext)) { return nextResolve(specifier); } // File is not ts, so step aside
 
-  if (!tsExts.has(ext)) { return resolution; } // File is not ts, so step aside
+  const { url } = await nextResolve(specifier); // This can be deduplicated but isn't for simplicity
 
   return {
     format: 'typescript', // Provide a signal to `load`
     shortCircuit: true,
-    url: (await resolution).url,
+    url,
   };
 }
 
 export async function load(url, context, nextLoad) {
-  if (context.format !== 'typescript') { return nextLoad(url, context); }
+  if (context.format !== 'typescript') { return nextLoad(url); }
 
   const rawSource = '' + (await nextLoad(url, { ...context, format: 'module' })).source;
 

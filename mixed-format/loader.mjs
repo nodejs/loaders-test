@@ -3,21 +3,31 @@ export async function load(url, context, nextLoad) {
 
   const nextResult = await nextLoad(url, { ...context, format: 'module' })
     .then((result) => {
-      if (`${result.source}`.match(/exports[\. =]/)) throw new Error('Module is commonjs');
+      if (containsCJS(result.source)) { throw new Error('CommonJS'); }
 
       return result;
     })
     .catch(async (err) => {
       if (
         (err?.message.includes('require') && err.includes('import'))
-        || err?.message.includes('commonjs')
-      ) return {
-        format: 'commonjs',
-        source: (await nextLoad(url, {...context, format: 'commonjs' })).source,
-      };
+        || err?.message.includes('CommonJS')
+      ) {
+        return { format: 'commonjs' };
+      }
 
       throw err;
     });
 
   return nextResult;
+}
+
+function containsCJS(source) {
+  const src = '' + source;
+
+  if (src.match(/exports[\.( ?=)]/)) return true;
+
+  if (
+    src.match(/require\(/)
+    && !src.match(/createRequire\(/)
+  ) return true;
 }

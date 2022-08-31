@@ -24,7 +24,8 @@ export async function load(url, context, nextLoad) {
 function containsCJS(source) {
   const src = '' + source;
 
-  if (src.match(/exports[\.( ?=)]/)) return true;
+  // A realistic version of this loader would use a parser like Acorn to check for actual `module.exports` syntax
+  if (src.match(/exports[\.( ?=)]/)) { return true };
 
   if (
     src.match(/require\(/)

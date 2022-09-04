@@ -25,10 +25,10 @@ function containsCJS(source) {
   const src = '' + source;
 
   // A realistic version of this loader would use a parser like Acorn to check for actual `module.exports` syntax
-  if (src.match(/exports[\.( ?=)]/)) { return true };
+  if ((/exports[\[\.( ?=)]/).test(src)) { return true };
 
   if (
-    src.match(/require\(/)
-    && !src.match(/createRequire\(/)
-  ) return true;
+    (/require\(/).test(src)
+    && !(/createRequire\(/).test(src)
+  ) { return true; }
 }

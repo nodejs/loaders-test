@@ -9,7 +9,7 @@ import { execPath } from 'process';
 const child = spawn(execPath, [
   '--loader',
   './loader.js',
-  './fixtures/index.js'
+  './test/basic-fixtures/index.js'
 ]);
 
 let stdout = '';

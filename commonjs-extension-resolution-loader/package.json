@@ -8,6 +8,9 @@
     "start": "npm test",
     "test": "node test.js"
   },
-  "author": "Geoffrey Booth <webmaster@geoffreybooth.com>",
-  "license": "MIT"
+  "author": "Geoffrey Booth <webadmin@geoffreybooth.com>",
+  "license": "MIT",
+  "dependencies": {
+    "resolve": "^1.22.1"
+  }
 }

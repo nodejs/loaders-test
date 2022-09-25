@@ -1,27 +1,34 @@
-import { existsSync } from 'fs';
-import { createRequire } from 'module';
+import { builtinModules } from 'node:module';
 import { dirname } from 'path';
-import { URL, fileURLToPath, pathToFileURL } from 'url';
+import { cwd } from 'process';
+import { fileURLToPath, pathToFileURL } from 'url';
+import { promisify } from 'util';
 
-const require = createRequire(import.meta.url);
-const baseURL = pathToFileURL(process.cwd() + '/').href;
+import resolveCallback from 'resolve/async.js';
 
-export function resolve(specifier, context, defaultResolve) {
+const resolveAsync = promisify(resolveCallback);
+
+const baseURL = pathToFileURL(cwd() + '/').href;
+
+
+export async function resolve(specifier, context, next) {
   const { parentURL = baseURL } = context;
 
-  // `require.resolve` works with paths, not URLs, so convert to and from
+  if (specifier.startsWith('node:') || builtinModules.includes(specifier)) {
+    return next(specifier, context);
+  }
+
+  // `resolveAsync` works with paths, not URLs
   if (specifier.startsWith('file://')) {
     specifier = fileURLToPath(specifier);
   }
-  const basePath = dirname(fileURLToPath(parentURL));
-  const resolvedPath = require.resolve(specifier, {paths: [basePath]});
+  const parentPath = fileURLToPath(parentURL);
 
-  if (existsSync(resolvedPath)) {
-    return {
-      url: pathToFileURL(resolvedPath).href
-    };
-  }
+  const resolution = await resolveAsync(specifier, {
+    basedir: dirname(parentPath),
+    extensions: ['.js', '.json', '.node'],
+  });
+  const url = pathToFileURL(resolution).href;
 
-  // Let Node.js handle all other specifiers, such as package names
-  return defaultResolve(specifier, context, defaultResolve);
+  return next(url, context);
 }

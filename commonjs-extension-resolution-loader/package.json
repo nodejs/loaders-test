@@ -6,7 +6,7 @@
   "main": "./loader.js",
   "scripts": {
     "start": "npm test",
-    "test": "node test.js"
+    "test": "node test/basic.js && node test/test-esm-specifiers.js && node test/test-esm-specifiers-symlink.js"
   },
   "author": "Geoffrey Booth <webadmin@geoffreybooth.com>",
   "license": "MIT",

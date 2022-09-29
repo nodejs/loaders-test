@@ -12,11 +12,13 @@ export function resolve(specifier, context, defaultResolve) {
       specifier = new URL(specifier, import.meta.url).href
     }
     return {
-      url: specifier
+      shortCircuit: true,
+      url: specifier,
     };
   } else if (parentURL && parentURL.endsWith('.pgp')) {
     return {
-      url: new URL(specifier, parentURL).href
+      shortCircuit: true,
+      url: new URL(specifier, parentURL).href,
     };
   }
 
@@ -37,9 +39,10 @@ export async function load(url, context, defaultLoad) {
         message: cryptMsg,
         privateKeys: privateKeys
       }))
-      .then(decripted => ({
+      .then(decrypted => ({
+        shortCircuit: true,
         format: "module",
-        source: decripted.data
+        source: decrypted.data
       }))
   }
 

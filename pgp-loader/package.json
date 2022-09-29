@@ -1,13 +1,13 @@
 {
   "name": "pgp-loader",
   "version": "0.1.0",
-  "description": "Load encripted packages",
+  "description": "Load encrypted packages",
   "type": "module",
   "scripts": {
     "start": "npm test",
     "test": "node --experimental-loader ./loader.js test.js",
     "env": "env",
-    "create-key-and-encript": "node create-key-and-encript.js"
+    "create-key-and-encrypt": "node create-key-and-encrypt.js"
   },
   "config": {
     "key_passwd": "Loo hoo se her"

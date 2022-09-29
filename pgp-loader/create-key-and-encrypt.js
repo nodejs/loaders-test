@@ -36,7 +36,7 @@ pgp.generateKey({
     privateKeys: privateKeys
 }))
 .then(cipher => {
-    console.log('Encripted module:\n', cipher.data);
+    console.log('Encrypted module:\n', cipher.data);
     return fs.writeFile('fixture.js.pgp', cipher.data.replace(/\r/g, ''));
 })
 
@@ -50,11 +50,11 @@ pgp.generateKey({
     privateKeys: privateKeys
 }))
 
-.then(decripted => assert.equal(decripted.data, moduleSrc))
+.then(decrypted => assert.equal(decrypted.data, moduleSrc))
 
 .then(() => console.log('All fine!'))
 
 .catch(err => {
-    console.error('>>> Encriptation fail! <<<\n', err);
+    console.error('>>> Encryption fail! <<<\n', err);
     process.exit(1);
 })

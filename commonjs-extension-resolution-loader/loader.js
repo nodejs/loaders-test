@@ -1,8 +1,8 @@
-import { builtinModules } from 'node:module';
-import { dirname } from 'path';
-import { cwd } from 'process';
-import { fileURLToPath, pathToFileURL } from 'url';
-import { promisify } from 'util';
+import { isBuiltin } from 'node:module';
+import { dirname } from 'node:path';
+import { cwd } from 'node:process';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { promisify } from 'node:util';
 
 import resolveCallback from 'resolve/async.js';
 
@@ -14,7 +14,7 @@ const baseURL = pathToFileURL(cwd() + '/').href;
 export async function resolve(specifier, context, next) {
   const { parentURL = baseURL } = context;
 
-  if (specifier.startsWith('node:') || builtinModules.includes(specifier)) {
+  if (isBuiltin(specifier)) {
     return next(specifier, context);
   }
 

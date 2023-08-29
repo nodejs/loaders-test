@@ -15,6 +15,6 @@
   "author": "Aurélio Heckert",
   "license": "MIT",
   "dependencies": {
-    "openpgp": "^4.10.4"
+    "openpgp": "^4.10.11"
   }
 }
